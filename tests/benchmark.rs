@@ -45,17 +45,8 @@ macro_rules! insert {
     }};
 }
 
-macro_rules! insert_flurry {
-    ($name:expr, $ret:expr, $map:expr, $total:expr) => {{
-        let start = Instant::now();
-        let m = $map;
-        let guard = m.guard();
-        let m = m.with_guard(&guard);
-        eval!(m, $total, CAPACITY);
-        let e = start.elapsed();
-        $ret.insert($name, e);
-    }};
-}
+       
+
 
 fn benchmark(total: usize) -> HashMap<&'static str, Duration> {
     let mut ret = HashMap::new();
@@ -128,12 +119,40 @@ fn benchmark(total: usize) -> HashMap<&'static str, Duration> {
         heapless::LinearMap::<u32, i64, CAPACITY>::new(),
         total
     );
-    insert_flurry!(
-        "flurry::HashMap",
-        ret,
-        flurry::HashMap::<u32, i64>::new(),
-        total
-    );
+    // insert_flurry(
+    //     "flurry::HashMap",
+    //     ret,
+    //     flurry::HashMap::<u32, i64>::new(),
+    //     total
+    // );
+    {
+        let start = Instant::now();
+        let map = flurry::HashMap::<u32, i64>::new();
+        
+        let mut sum = 0;
+        for _ in 0..total {
+            let guard = map.guard();
+            let m = map.with_guard(&guard);
+            m.clear();
+            let _ = m.insert(0, 42);
+            for i in 1..CAPACITY - 1 {
+                let _ = m.insert(i as u32, i as i64);
+                let v = std::hint::black_box(*m.get(&(i as u32)).unwrap());
+                assert_eq!(v, i as i64);
+            }
+            for i in 1..CAPACITY - 1 {
+                m.remove(&(i as u32));
+            }
+            if m.iter().find(|(_k, v)| **v == 0).is_some() {
+                m.clear();
+            }
+            sum += std::hint::black_box(m.iter().find(|(_k, v)| **v == 42).unwrap().1);
+        }
+        std::hint::black_box(sum);
+
+        let e = start.elapsed();
+        ret.insert("flurry::HashMap", e);
+    }
     insert!(
         "micromap::Map",
         ret,
