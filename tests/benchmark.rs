@@ -49,7 +49,9 @@ macro_rules! insert_flurry {
     ($name:expr, $ret:expr, $map:expr, $total:expr) => {{
         let start = Instant::now();
         let m = $map;
-        eval!(m.pin(), $total, CAPACITY);
+        let guard = m.guard();
+        let m = m.with_guard(&guard);
+        eval!(m, $total, CAPACITY);
         let e = start.elapsed();
         $ret.insert($name, e);
     }};
