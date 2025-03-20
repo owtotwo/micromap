@@ -45,9 +45,6 @@ macro_rules! insert {
     }};
 }
 
-       
-
-
 fn benchmark(total: usize) -> HashMap<&'static str, Duration> {
     let mut ret = HashMap::new();
     insert!(
@@ -128,7 +125,7 @@ fn benchmark(total: usize) -> HashMap<&'static str, Duration> {
     {
         let start = Instant::now();
         let map = flurry::HashMap::<u32, i64>::new();
-        
+
         let mut sum = 0;
         for _ in 0..total {
             let guard = map.guard();
