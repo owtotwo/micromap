@@ -131,9 +131,11 @@ mod tests {
         assert_eq!(it_into.len(), 2);
         assert_eq!(it_into.len(), it_into.size_hint().0);
         assert_eq!(it_into.len(), it_into.size_hint().1.unwrap());
+
+
     }
 
-    #[test]
+    #[test] 
     fn test_set_from() {
         let set_a = Set::from(['a', 'b', 'c', 'd']);
         let set_b = Set::from_iter(vec!['a', 'a', 'd', 'b', 'a', 'd', 'c', 'd', 'c']);
