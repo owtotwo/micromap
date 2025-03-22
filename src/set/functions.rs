@@ -4,6 +4,8 @@
 use crate::{Set, SetDrain};
 use core::borrow::Borrow;
 
+use super::difference::Difference;
+
 impl<T: PartialEq, const N: usize> Set<T, N> {
     /// Get its total capacity.
     #[inline]
@@ -103,4 +105,16 @@ impl<T: PartialEq, const N: usize> Set<T, N> {
     {
         self.map.remove_entry(k).map(|p| p.0)
     }
+
+    /// Visits the values representing the difference,
+    /// i.e., the values that are in `self` but not in `other`.
+    #[inline]
+    pub fn difference<'a>(&'a self, other: &'a Set<T, N>) -> Difference<'a, T, N> {
+        Difference {
+            iter: self.iter(),
+            other,
+        }
+    }
 }
+
+

@@ -20,6 +20,13 @@ impl<K: PartialEq, V, const N: usize> Map<K, V, N> {
     }
 }
 
+impl<'a, K, V> Clone for Keys<'a, K, V> {
+    #[inline]
+    fn clone(&self) -> Self {
+        Keys { iter: self.iter.clone() }
+    }
+}
+
 impl<'a, K, V> Iterator for Keys<'a, K, V> {
     type Item = &'a K;
 
