@@ -20,7 +20,6 @@ pub mod difference;
 // pub mod symmetric_difference;
 // pub mod union;
 
-
 /// A faster alternative of [`std::collections::HashSet`].
 ///
 /// For example, this is how you make a set, which is allocated on stack and is capable of storing

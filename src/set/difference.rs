@@ -1,5 +1,3 @@
-
-
 use crate::Set;
 use crate::SetIter;
 
@@ -19,14 +17,14 @@ use crate::SetIter;
 ///
 /// let mut difference = a.difference(&b);
 /// ```
-pub struct Difference<'a, T: 'a + PartialEq, const N: usize> {
+pub struct Difference<'a, T: 'a + PartialEq, const M: usize> {
     // iterator of the first set
     pub(super) iter: SetIter<'a, T>,
     // the second set
-    pub(super) other: &'a Set<T, N>,
+    pub(super) other: &'a Set<T, M>,
 }
 
-impl<T: PartialEq, const N: usize> Clone for Difference<'_, T, N> {
+impl<T: PartialEq, const M: usize> Clone for Difference<'_, T, M> {
     #[inline]
     fn clone(&self) -> Self {
         Difference {
@@ -36,17 +34,12 @@ impl<T: PartialEq, const N: usize> Clone for Difference<'_, T, N> {
     }
 }
 
-impl<'a, T: PartialEq, const N: usize> Iterator for Difference<'a, T, N> {
+impl<'a, T: PartialEq, const M: usize> Iterator for Difference<'a, T, M> {
     type Item = &'a T;
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        for item in self.iter.by_ref() {
-            if !self.other.contains(item) {
-                return Some(item);
-            }
-        }
-        None
+        self.iter.by_ref().find(|&item| !self.other.contains(item))
     }
 
     #[inline]
@@ -73,12 +66,11 @@ impl<'a, T: PartialEq, const N: usize> Iterator for Difference<'a, T, N> {
 }
 
 #[cfg(feature = "std")]
-impl<T: std::fmt::Debug + PartialEq, const N: usize> std::fmt::Debug for Difference<'_, T, N> {
+impl<T: std::fmt::Debug + PartialEq, const M: usize> std::fmt::Debug for Difference<'_, T, M> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_list().entries(self.clone()).finish()
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -86,17 +78,17 @@ mod tests {
 
     #[test]
     fn test_difference() {
-        let set_a: Set<u32, 4> = Set::from([1, 3, 5, 7]);
+        let set_a: Set<u32, 5> = Set::from([0, 1, 3, 5, 7]);
         let set_b: Set<u32, 4> = Set::from([2, 4, 6, 8]);
 
-        let set_diff = set_a.difference(&set_b).copied().collect::<Set<u32, 4>>();
+        let set_diff = set_a.difference(&set_b).copied().collect::<Set<u32, 5>>();
         assert_eq!(set_a, set_diff);
     }
 
     #[test]
     fn test_difference_with_overlap() {
         let set_a: Set<u32, 4> = Set::from([1, 3, 5, 7]);
-        let set_b: Set<u32, 4> = Set::from([3, 5, 6, 8]);
+        let set_b: Set<u32, 5> = Set::from([3, 5, 6, 8, 9]);
 
         let set_diff = set_a.difference(&set_b).copied().collect::<Set<u32, 4>>();
         let expected: Set<u32, 4> = Set::from_iter([1, 7]);
@@ -134,11 +126,11 @@ mod tests {
 
     #[test]
     fn test_difference_partial_overlap() {
-        let set_a: Set<u32, 6> = Set::from([1, 2, 3, 4, 5, 6]);
-        let set_b: Set<u32, 6> = Set::from([4, 5, 6, 7, 8, 9]);
+        let set_a = Set::from([1, 2, 3, 4, 5, 6]);
+        let set_b = Set::from([4, 5, 6, 7, 8, 9]);
 
-        let set_diff = set_a.difference(&set_b).copied().collect::<Set<u32, 6>>();
-        let expected: Set<u32, 6> = Set::from_iter([1, 2, 3]);
+        let set_diff = set_a.difference(&set_b).copied().collect::<Set<_, 6>>();
+        let expected = Set::from_iter([1, 2, 3]);
         assert_eq!(expected, set_diff);
     }
 }

@@ -19,7 +19,7 @@ impl<K: PartialEq, V, const N: usize> Map<K, V, N> {
     }
 }
 
-impl<'a, K, V> Clone for Iter<'a, K, V> {
+impl<K, V> Clone for Iter<'_, K, V> {
     #[inline]
     fn clone(&self) -> Self {
         Self {

@@ -109,12 +109,10 @@ impl<T: PartialEq, const N: usize> Set<T, N> {
     /// Visits the values representing the difference,
     /// i.e., the values that are in `self` but not in `other`.
     #[inline]
-    pub fn difference<'a>(&'a self, other: &'a Set<T, N>) -> Difference<'a, T, N> {
+    pub fn difference<'a, const M: usize>(&'a self, other: &'a Set<T, M>) -> Difference<'a, T, M> {
         Difference {
             iter: self.iter(),
             other,
         }
     }
 }
-
-

@@ -20,10 +20,12 @@ impl<K: PartialEq, V, const N: usize> Map<K, V, N> {
     }
 }
 
-impl<'a, K, V> Clone for Keys<'a, K, V> {
+impl<K, V> Clone for Keys<'_, K, V> {
     #[inline]
     fn clone(&self) -> Self {
-        Keys { iter: self.iter.clone() }
+        Keys {
+            iter: self.iter.clone(),
+        }
     }
 }
 
