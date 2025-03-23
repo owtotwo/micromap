@@ -1,10 +1,23 @@
 // SPDX-FileCopyrightText: Copyright (c) 2023-2025 Yegor Bugayenko
+// SPDX-FileCopyrightText: Copyright (c) 2025 owtotwo
 // SPDX-License-Identifier: MIT
 
 use crate::Set;
 use crate::SetIter;
 
-/// A lazy iterator producing elements in the difference of Liner `Set`s.
+impl<T: PartialEq, const N: usize> Set<T, N> {
+    /// Visits the values representing the difference,
+    /// i.e., the values that are in `self` but not in `other`.
+    #[inline]
+    pub fn difference<'a, const M: usize>(&'a self, other: &'a Set<T, M>) -> Difference<'a, T, M> {
+        Difference {
+            iter: self.iter(),
+            other,
+        }
+    }
+}
+
+/// A lazy iterator producing elements in the difference of Linear `Set`s.
 ///
 /// This `struct` is created by the [`difference`] method on [`Set`].
 ///
@@ -77,7 +90,36 @@ impl<T: std::fmt::Debug + PartialEq, const M: usize> std::fmt::Debug for Differe
 
 #[cfg(test)]
 mod tests {
+
     use crate::Set;
+
+    // TODO: This is a BUG in the standard library function.
+    // #[test]
+    // #[ignore]
+    // fn difference_lifetime() {
+    //     use std::collections::hash_set::HashSet as Set;
+
+    //     let sentence_1 = String::from("I love the surf and the sand.");
+    //     let sentence_1_words: Set<&str> = sentence_1.split(" ").collect();
+
+    //     let first_only = {
+    //         let sentence_2 = String::from("I hate the hate and the sand.");
+    //         let sentence_2_words: Set<&str> = sentence_2.split(" ").collect();
+    //         let first_only: Vec<_> = sentence_1_words.difference(&sentence_2_words).collect();
+    //         let second_only: Vec<_> = sentence_2_words.difference(&sentence_1_words).collect();
+
+    //         println!("First  Sentence: {}", sentence_1);
+    //         println!("Second Sentence: {}", sentence_2);
+    //         println!("{:?}", first_only);
+    //         println!("{:?}", second_only);
+    //         first_only
+    //     };
+
+    //     assert_eq!(
+    //         Set::<_>::from_iter(first_only.into_iter().copied()),
+    //         Set::<_>::from_iter(["love", "surf"])
+    //     );
+    // }
 
     #[test]
     fn test_difference() {
