@@ -8,6 +8,26 @@ use crate::SetIter;
 impl<T: PartialEq, const N: usize> Set<T, N> {
     /// Visits the values representing the difference,
     /// i.e., the values that are in `self` but not in `other`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let a = Set::from([1, 2, 3]);
+    /// let b = Set::from([4, 2, 3, 4]);
+    ///
+    /// // Can be seen as `a - b`.
+    /// for x in a.difference(&b) {
+    ///     println!("{x}"); // Print 1
+    /// }
+    ///
+    /// let diff: Set<_, 3> = a.difference(&b).collect();
+    /// assert_eq!(diff, [1].iter().collect());
+    ///
+    /// // Note that difference is not symmetric,
+    /// // and `b - a` means something else:
+    /// let diff: Set<_, 4> = b.difference(&a).collect();
+    /// assert_eq!(diff, [4].iter().collect());
+    /// ```
     #[inline]
     pub fn difference<'a, const M: usize>(&'a self, other: &'a Set<T, M>) -> Difference<'a, T, M> {
         Difference {
@@ -35,9 +55,9 @@ impl<T: PartialEq, const N: usize> Set<T, N> {
 /// ```
 pub struct Difference<'a, T: 'a + PartialEq, const M: usize> {
     // iterator of the first set
-    pub(super) iter: SetIter<'a, T>,
+    iter: SetIter<'a, T>,
     // the second set
-    pub(super) other: &'a Set<T, M>,
+    other: &'a Set<T, M>,
 }
 
 impl<T: PartialEq, const M: usize> Clone for Difference<'_, T, M> {
@@ -98,23 +118,23 @@ mod tests {
     // #[ignore]
     // fn difference_lifetime() {
     //     use std::collections::hash_set::HashSet as Set;
-
+    // 
     //     let sentence_1 = String::from("I love the surf and the sand.");
     //     let sentence_1_words: Set<&str> = sentence_1.split(" ").collect();
-
+    // 
     //     let first_only = {
     //         let sentence_2 = String::from("I hate the hate and the sand.");
     //         let sentence_2_words: Set<&str> = sentence_2.split(" ").collect();
     //         let first_only: Vec<_> = sentence_1_words.difference(&sentence_2_words).collect();
     //         let second_only: Vec<_> = sentence_2_words.difference(&sentence_1_words).collect();
-
+    // 
     //         println!("First  Sentence: {}", sentence_1);
     //         println!("Second Sentence: {}", sentence_2);
     //         println!("{:?}", first_only);
     //         println!("{:?}", second_only);
     //         first_only
     //     };
-
+    // 
     //     assert_eq!(
     //         Set::<_>::from_iter(first_only.into_iter().copied()),
     //         Set::<_>::from_iter(["love", "surf"])
