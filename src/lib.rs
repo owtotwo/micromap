@@ -42,6 +42,7 @@ mod entry;
 mod eq;
 mod from;
 mod index;
+mod into;
 mod iterators;
 mod keys;
 mod map;

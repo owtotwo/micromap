@@ -11,6 +11,7 @@ mod eq;
 mod extend;
 mod from;
 mod intersection;
+mod into;
 mod iterators;
 mod methods;
 #[cfg(feature = "serde")]
