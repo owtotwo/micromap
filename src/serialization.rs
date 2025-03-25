@@ -59,14 +59,16 @@ impl<'de, K: PartialEq + Deserialize<'de>, V: Deserialize<'de>, const N: usize> 
 mod tests {
 
     use crate::Map;
-    use bincode::serde::{decode_from_slice, encode_to_vec};
+    use bincode::serde::{decode_from_slice, encode_into_slice};
 
     #[test]
     fn serialize_and_deserialize() {
         let config = bincode::config::legacy();
         let mut before: Map<u8, u8, 8> = Map::new();
         before.insert(1, 42);
-        let bytes: Vec<u8> = encode_to_vec(&before, config).unwrap();
+        let mut bytes: [u8; 1024] = [0; 1024];
+        let len = encode_into_slice(&before, &mut bytes, config).unwrap();
+        let bytes = &bytes[..len];
         println!("bytes: {:?}", bytes);
         let (after, read_len): (Map<u8, u8, 8>, usize) = decode_from_slice(&bytes, config).unwrap();
         assert_eq!(42, after.into_iter().next().unwrap().1);
@@ -77,7 +79,9 @@ mod tests {
     fn empty_map_serde() {
         let config = bincode::config::legacy();
         let before: Map<u8, u8, 8> = Map::new();
-        let bytes: Vec<u8> = encode_to_vec(&before, config).unwrap();
+        let mut bytes: [u8; 1024] = [0; 1024];
+        let len = encode_into_slice(&before, &mut bytes, config).unwrap();
+        let bytes = &bytes[..len];
         let (after, read_len): (Map<u8, u8, 8>, usize) = decode_from_slice(&bytes, config).unwrap();
         assert!(after.is_empty());
         assert_eq!(bytes.len(), read_len);
