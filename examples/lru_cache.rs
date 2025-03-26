@@ -140,22 +140,8 @@ fn main() {
     const MAX: usize = 2; // LRU Cache Capacity
 
     {
-        // std::collection::HashMap
-        let mut cache: LRUCache<u32, i32, MAX, HashMap<u32, i32>> = LRUCache::new();
-        cache.put(1, 1);
-        cache.put(2, 2);
-        assert_eq!(cache.get(&1), Some(&1)); // Some(&1)
-        cache.put(3, 3);
-        assert_eq!(cache.get(&2), None); // None (removed)
-        cache.put(4, 4);
-        assert_eq!(cache.get(&1), None); // None (removed)
-        assert_eq!(cache.get(&3), Some(&3)); // Some(&3)
-        assert_eq!(cache.get(&4), Some(&4)); // Some(&4)
-    }
-
-    {
         // micromap::Map
-        let mut cache: LRUCache<u32, i32, MAX, MicroMap<_, _, MAX>> = LRUCache::new();
+        let mut cache: LRUCache<_, _, MAX> = LRUCache::new(); //use MicroMap by default
         cache.put(1, 1);
         cache.put(2, 2);
         println!("{:?}", cache.get(&1)); // Some(&1)
@@ -165,5 +151,19 @@ fn main() {
         println!("{:?}", cache.get(&1)); // None (removed)
         println!("{:?}", cache.get(&3)); // Some(&3)
         println!("{:?}", cache.get(&4)); // Some(&4)
+    }
+
+    {
+        // std::collection::HashMap
+        let mut cache: LRUCache<_, _, MAX, HashMap<_, _>> = LRUCache::new();
+        cache.put(1, 1);
+        cache.put(2, 2);
+        assert_eq!(cache.get(&1), Some(&1)); // Some(&1)
+        cache.put(3, 3);
+        assert_eq!(cache.get(&2), None); // None (removed)
+        cache.put(4, 4);
+        assert_eq!(cache.get(&1), None); // None (removed)
+        assert_eq!(cache.get(&3), Some(&3)); // Some(&3)
+        assert_eq!(cache.get(&4), Some(&4)); // Some(&4)
     }
 }
