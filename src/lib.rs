@@ -47,11 +47,13 @@ mod into;
 mod iterators;
 mod keys;
 mod map;
+mod pod_map;
 #[cfg(feature = "serde")]
 mod serialization;
 mod set;
 mod values;
 
+pub use crate::pod_map::PodMap;
 pub use crate::set::{Set, SetDrain, SetIntoIter, SetIter};
 use core::mem::MaybeUninit;
 
