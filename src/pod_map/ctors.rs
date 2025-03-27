@@ -4,7 +4,7 @@
 use bytemuck::Pod;
 
 use super::PodMap;
-use core::mem::{zeroed, MaybeUninit};
+use core::mem::MaybeUninit;
 
 impl<K: PartialEq + Pod, V, const N: usize> Default for PodMap<K, V, N> {
     /// Make a default empty [`PodMap`].
@@ -25,7 +25,6 @@ impl<K: PartialEq + Pod, V, const N: usize> PodMap<K, V, N> {
     pub const fn new() -> Self {
         Self {
             len: 0,
-            bits: unsafe { (zeroed(), zeroed()) },
             pairs: [const { MaybeUninit::uninit() }; N],
         }
     }
@@ -76,7 +75,7 @@ mod tests {
         assert_eq!(Rc::strong_count(&v1), 3);
         m.insert(1, Rc::clone(&v2));
         assert_eq!(Rc::strong_count(&v1), 2);
-        
+
         drop(m);
         assert_eq!(Rc::strong_count(&v1), 1);
     }

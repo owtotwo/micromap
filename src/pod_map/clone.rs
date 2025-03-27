@@ -11,7 +11,6 @@ impl<K: Clone + PartialEq + Pod, V: Clone, const N: usize> Clone for PodMap<K, V
     fn clone(&self) -> Self {
         let mut pm = PodMap {
             len: self.len,
-            bits: self.bits.clone(),
             pairs: [const { MaybeUninit::uninit() }; N],
         };
         pm.pairs[..self.len]

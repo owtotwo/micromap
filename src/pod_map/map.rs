@@ -1,94 +1,15 @@
 // SPDX-FileCopyrightText: Copyright (c) 2023-2025 Yegor Bugayenko
 // SPDX-License-Identifier: MIT
 
-
 use bytemuck::Pod;
 
-use super::{Drain, Entry, PodMap, OccupiedEntry, VacantEntry};
+use super::{Drain, Entry, OccupiedEntry, PodMap, VacantEntry};
 use core::{borrow::Borrow, mem::replace};
 
 mod internal {
-    use core::mem::zeroed;
-
     use bytemuck::Pod;
 
-    use super::PodMap;
-
-    #[inline]
-    pub(crate) const fn bit_size_of<K: Sized>() -> usize {
-        core::mem::size_of::<K>() * 8
-    }
-
-    #[inline]
-    pub(crate) fn count_ones<K: Pod>(k: &K) -> usize {
-        let key = bytemuck::bytes_of(k);
-        key.iter().map(|k| k.count_ones()).sum::<u32>() as usize
-    }
-
-    #[inline]
-    pub(crate) fn more_zeros<K: Pod>(k: &K) -> bool {
-        let total_len = bit_size_of::<K>();
-        let ones_len = count_ones(k);
-        let zero_len = total_len - ones_len;
-        zero_len > ones_len
-    }
-
-    impl<K: PartialEq + Pod, V, const N: usize> PodMap<K, V, N> {
-        #[inline]
-        pub(crate) fn mark_check(&self, k: &K) -> bool {
-            let key = bytemuck::bytes_of(k);
-            if more_zeros(k) {
-                let zeros = bytemuck::bytes_of(&self.bits.0);
-                zeros
-                    .iter()
-                    .zip(key.iter())
-                    .all(|(&zero, &k)| zero & k == k)
-            } else {
-                let ones = bytemuck::bytes_of(&self.bits.1);
-                ones.iter().zip(key.iter()).all(|(&one, &k)| one & !k == !k)
-            }
-        }
-
-        #[inline]
-        pub(crate) fn mark_add(&mut self, k: usize) {
-            let key = bytemuck::bytes_of(&k);
-            if more_zeros(&k) {
-                let zeros = bytemuck::bytes_of_mut(&mut self.bits.0);
-                zeros
-                    .iter_mut()
-                    .zip(key.iter())
-                    .for_each(|(zero, &k)| *zero |= k);
-            } else {
-                let ones = bytemuck::bytes_of_mut(&mut self.bits.1);
-                ones.iter_mut()
-                    .zip(key.iter())
-                    .for_each(|(one, &k)| *one |= !k);
-            }
-        }
-
-        #[inline]
-        pub(crate) fn remark(&mut self) {
-            self.bits = unsafe { (zeroed(), zeroed()) };
-            let zeros = bytemuck::bytes_of_mut(&mut self.bits.0);
-            let ones = bytemuck::bytes_of_mut(&mut self.bits.1);
-
-            self.pairs[..self.len]
-                .iter()
-                .map(|p| unsafe { p.assume_init_ref().0 })
-                .for_each(|k| {
-                    if more_zeros(&k) {
-                        zeros
-                            .iter_mut()
-                            .zip(bytemuck::bytes_of(&k).iter())
-                            .for_each(|(zero, &k)| *zero |= k);
-                    } else {
-                        ones.iter_mut()
-                            .zip(bytemuck::bytes_of(&k).iter())
-                            .for_each(|(one, &k)| *one |= !k);
-                    }
-                });
-        }
-    }
+    use super::super::PodMap;
 
     impl<K: PartialEq + Pod, V, const N: usize> PodMap<K, V, N> {
         /// Internal function to get access via reference to the element in the internal array.
@@ -147,6 +68,144 @@ mod internal {
             result
         }
     }
+
+    //     use bytemuck::Pod;
+
+    //     use super::PodMap;
+
+    //     #[inline]
+    //     pub(crate) const fn bit_size_of<K: Sized>() -> usize {
+    //         core::mem::size_of::<K>() * 8
+    //     }
+
+    //     #[inline]
+    //     pub(crate) fn count_ones<K: Pod>(k: &K) -> usize {
+    //         let key = bytemuck::bytes_of(k);
+    //         key.iter().map(|k| k.count_ones()).sum::<u32>() as usize
+    //     }
+
+    //     #[inline]
+    //     pub(crate) fn more_zeros<K: Pod>(k: &K) -> bool {
+    //         let total_len = bit_size_of::<K>();
+    //         let ones_len = count_ones(k);
+    //         let zero_len = total_len - ones_len;
+    //         zero_len > ones_len
+    //     }
+
+    //     impl<K: PartialEq + Pod, V, const N: usize> PodMap<K, V, N> {
+    //         #[inline]
+    //         pub(crate) fn mark_check(&self, k: &K) -> bool {
+    //             let key = bytemuck::bytes_of(k);
+    //             if more_zeros(k) {
+    //                 let zeros = bytemuck::bytes_of(&self.bits.0);
+    //                 zeros
+    //                     .iter()
+    //                     .zip(key.iter())
+    //                     .all(|(&zero, &k)| zero & k == k)
+    //             } else {
+    //                 let ones = bytemuck::bytes_of(&self.bits.1);
+    //                 ones.iter().zip(key.iter()).all(|(&one, &k)| one & !k == !k)
+    //             }
+    //         }
+
+    //         #[inline]
+    //         pub(crate) fn mark_add(&mut self, k: usize) {
+    //             let key = bytemuck::bytes_of(&k);
+    //             if more_zeros(&k) {
+    //                 let zeros = bytemuck::bytes_of_mut(&mut self.bits.0);
+    //                 zeros
+    //                     .iter_mut()
+    //                     .zip(key.iter())
+    //                     .for_each(|(zero, &k)| *zero |= k);
+    //             } else {
+    //                 let ones = bytemuck::bytes_of_mut(&mut self.bits.1);
+    //                 ones.iter_mut()
+    //                     .zip(key.iter())
+    //                     .for_each(|(one, &k)| *one |= !k);
+    //             }
+    //         }
+
+    //         #[inline]
+    //         pub(crate) fn remark(&mut self) {
+    //             self.bits = unsafe { (zeroed(), zeroed()) };
+    //             let zeros = bytemuck::bytes_of_mut(&mut self.bits.0);
+    //             let ones = bytemuck::bytes_of_mut(&mut self.bits.1);
+
+    //             self.pairs[..self.len]
+    //                 .iter()
+    //                 .map(|p| unsafe { p.assume_init_ref().0 })
+    //                 .for_each(|k| {
+    //                     if more_zeros(&k) {
+    //                         zeros
+    //                             .iter_mut()
+    //                             .zip(bytemuck::bytes_of(&k).iter())
+    //                             .for_each(|(zero, &k)| *zero |= k);
+    //                     } else {
+    //                         ones.iter_mut()
+    //                             .zip(bytemuck::bytes_of(&k).iter())
+    //                             .for_each(|(one, &k)| *one |= !k);
+    //                     }
+    //                 });
+    //         }
+    //     }
+
+    //     impl<K: PartialEq + Pod, V, const N: usize> PodMap<K, V, N> {
+    //         /// Internal function to get access via reference to the element in the internal array.
+    //         #[inline]
+    //         pub(crate) unsafe fn item_ref(&self, i: usize) -> &(K, V) {
+    //             self.pairs.get_unchecked(i).assume_init_ref()
+    //         }
+
+    //         /// Internal function to get mutable access via reference to the element in the internal array.
+    //         #[inline]
+    //         pub(crate) unsafe fn item_mut(&mut self, i: usize) -> &mut V {
+    //             &mut self.pairs.get_unchecked_mut(i).assume_init_mut().1
+    //         }
+
+    //         /// Internal function to get access to the element in the internal array.
+    //         #[inline]
+    //         pub(crate) unsafe fn item_read(&mut self, i: usize) -> (K, V) {
+    //             self.pairs.get_unchecked(i).assume_init_read()
+    //         }
+
+    //         /// Internal function to get access to the element in the internal array.
+    //         #[inline]
+    //         pub(crate) unsafe fn item_drop(&mut self, i: usize) {
+    //             self.pairs.get_unchecked_mut(i).assume_init_drop();
+    //         }
+
+    //         /// Internal function to get access to the element in the internal array.
+    //         #[inline]
+    //         pub(crate) unsafe fn item_write(&mut self, i: usize, val: (K, V)) {
+    //             self.pairs.get_unchecked_mut(i).write(val);
+    //         }
+
+    //         /// Remove an index (by swapping the last one here and reducing the length)
+    //         #[inline]
+    //         pub(crate) unsafe fn remove_index_drop(&mut self, i: usize) {
+    //             self.item_drop(i);
+
+    //             self.len -= 1;
+    //             if i != self.len {
+    //                 let value = self.item_read(self.len);
+    //                 self.item_write(i, value);
+    //             }
+    //         }
+
+    //         /// Remove an index (by swapping the last one here and reducing the length)
+    //         #[inline]
+    //         pub(crate) unsafe fn remove_index_read(&mut self, i: usize) -> (K, V) {
+    //             let result = self.item_read(i);
+
+    //             self.len -= 1;
+    //             if i != self.len {
+    //                 let value = self.item_read(self.len);
+    //                 self.item_write(i, value);
+    //             }
+
+    //             result
+    //         }
+    //     }
 }
 
 impl<K: PartialEq + Pod, V, const N: usize> PodMap<K, V, N> {
@@ -562,7 +621,7 @@ mod tests {
 
     #[test]
     fn get_key_value() {
-        let mut m: PodMap<[u8;3], i32, 10> = PodMap::new();
+        let mut m: PodMap<[u8; 3], i32, 10> = PodMap::new();
         let k = b"key";
         assert_eq!(m.insert(k.clone(), 42), None);
         assert_eq!(m.get_key_value(k), Some((k, &42)));
@@ -578,7 +637,7 @@ mod tests {
 
     #[test]
     fn remove_entry_present() {
-        let mut m: PodMap<[u8;3], i32, 10> = PodMap::new();
+        let mut m: PodMap<[u8; 3], i32, 10> = PodMap::new();
         let k = b"key";
         assert_eq!(m.insert(k.clone(), 42), None);
         assert_eq!(m.remove_entry(k), Some((k.clone(), 42)));

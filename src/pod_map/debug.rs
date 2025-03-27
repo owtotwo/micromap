@@ -22,7 +22,7 @@ mod tests {
         let mut m: PodMap<[u8;3], i32, 10> = PodMap::new();
         m.insert(b"one".to_owned(), 42);
         m.insert(b"two".to_owned(), 16);
-        assert_eq!(r#"{"one": 42, "two": 16}"#, format!("{:?}", m));
+        assert_eq!(r#"{[111, 110, 101]: 42, [116, 119, 111]: 16}"#, format!("{:?}", m));
     }
 
     #[test]
@@ -32,8 +32,16 @@ mod tests {
         m.insert(b"two".to_owned(), 16);
         assert_eq!(
             r#"{
-    "one": 42,
-    "two": 16,
+    [
+        111,
+        110,
+        101,
+    ]: 42,
+    [
+        116,
+        119,
+        111,
+    ]: 16,
 }"#,
             format!("{:#?}", m)
         );

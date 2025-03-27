@@ -46,24 +46,14 @@ use bytemuck::Pod;
 /// up to eight key-values pairs:
 ///
 /// ```
-/// let mut m : micromap::Map<u64, Vec<char>, 8> = micromap::PodMap::new(); // u64 is Pod type
+/// let mut m : micromap::PodMap<u64, Vec<char>, 8> = micromap::PodMap::new(); // u64 is Pod type
 /// m.insert(1, vec!['H', 'e', 'l', 'l', 'o']);
 /// m.insert(2, vec!['W', 'o', 'r', 'l', 'd', '!']);
 /// assert_eq!(2, m.len());
 /// ```
-pub struct Map<K: PartialEq, V, const N: usize> {
-    /// The next available pair in the array.
-    len: usize,
-    /// The bit mask of the keys.
-    bits: (K, K),
-    /// The fixed-size array of key-value pairs.
-    pairs: [MaybeUninit<(K, V)>; N],
-}
 pub struct PodMap<K: PartialEq + Pod, V, const N: usize> {
     /// The next available pair in the array.
     len: usize,
-    /// The bit mask of the keys.
-    bits: (K, K),
     /// The fixed-size array of key-value pairs.
     pairs: [MaybeUninit<(K, V)>; N],
 }

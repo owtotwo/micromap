@@ -5,7 +5,7 @@
 use bytemuck::Pod;
 
 use super::PodMap;
-use core::mem::{swap, zeroed, MaybeUninit};
+use core::mem::MaybeUninit;
 
 impl<K: PartialEq + Pod, V, const N: usize> PodMap<K, V, N> {
     /// Consumes itself and generates a new one then swap the data
@@ -26,11 +26,9 @@ impl<K: PartialEq + Pod, V, const N: usize> PodMap<K, V, N> {
         );
         let mut other = PodMap {
             len: self.len,
-            bits: unsafe { (zeroed(), zeroed()) },
             pairs: [const { MaybeUninit::uninit() }; M],
         };
         other.pairs[..self.len].swap_with_slice(self.pairs[..self.len].as_mut());
-        swap(&mut other.bits, &mut self.bits);
         other
     }
 }
