@@ -54,7 +54,7 @@ impl<T: PartialEq, const N: usize> Set<T, N> {
 /// ```
 #[must_use = "this returns the difference as an iterator, without modifying either input set"]
 pub struct SymmetricDifference<'a, T: PartialEq, const N: usize, const M: usize> {
-    iter: core::iter::Chain<Difference<'a, T, M>, Difference<'a, T, N>>,
+    iter: core::iter::Chain<Difference<'a, 'a, T, M>, Difference<'a, 'a, T, N>>,
 }
 
 impl<T: PartialEq, const N: usize, const M: usize> Clone for SymmetricDifference<'_, T, N, M> {
