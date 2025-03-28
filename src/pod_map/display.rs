@@ -32,9 +32,12 @@ mod tests {
 
     #[test]
     fn displays_map() {
-        let mut m: PodMap<[u8;3], i32, 10> = PodMap::new();
+        let mut m: PodMap<[u8; 3], i32, 10> = PodMap::new();
         m.insert(b"one".to_owned(), 42);
         m.insert(b"two".to_owned(), 16);
-        assert_eq!(r#"{[111, 110, 101]: 42, [116, 119, 111]: 16}"#, format!("{:?}", m));
+        assert_eq!(
+            r#"{[111, 110, 101]: 42, [116, 119, 111]: 16}"#,
+            format!("{:?}", m)
+        );
     }
 }

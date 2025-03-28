@@ -4,7 +4,7 @@
 use bytemuck::Pod;
 
 use super::PodMap;
-use core::mem::MaybeUninit;
+use core::mem::{zeroed, MaybeUninit};
 
 impl<K: PartialEq + Pod, V, const N: usize> Default for PodMap<K, V, N> {
     /// Make a default empty [`PodMap`].
@@ -17,15 +17,16 @@ impl<K: PartialEq + Pod, V, const N: usize> Default for PodMap<K, V, N> {
 impl<K: PartialEq + Pod, V, const N: usize> PodMap<K, V, N> {
     /// Make it.
     ///
-    /// The size of the PodMap is defined by the generic argument. For example,
-    /// this is how you make a PodMap of four key-values pairs:
+    /// The size of the [`PodMap`] is defined by the generic argument. For example,
+    /// this is how you make a [`PodMap`] of four key-values pairs:
     #[inline]
     #[must_use]
     #[allow(clippy::uninit_assumed_init)]
     pub const fn new() -> Self {
         Self {
             len: 0,
-            pairs: [const { MaybeUninit::uninit() }; N],
+            keys: [unsafe { zeroed() }; N],
+            values: [const { MaybeUninit::uninit() }; N],
         }
     }
 }

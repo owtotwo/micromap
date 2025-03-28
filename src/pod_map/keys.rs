@@ -97,6 +97,9 @@ mod tests {
         m.insert(b"bar".to_owned(), 0);
         let keys = m.into_keys();
         assert_eq!(keys.len(), 2);
-        assert_eq!(keys.collect::<Vec<_>>(), [b"bar".to_owned(), b"foo".to_owned()]);
+        assert_eq!(
+            keys.collect::<Vec<_>>(),
+            [b"bar".to_owned(), b"foo".to_owned()]
+        );
     }
 }

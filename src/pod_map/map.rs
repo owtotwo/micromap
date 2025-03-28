@@ -4,9 +4,11 @@
 use bytemuck::Pod;
 
 use super::{Drain, Entry, OccupiedEntry, PodMap, VacantEntry};
-use core::{borrow::Borrow, mem::replace};
+use core::borrow::Borrow;
 
 mod internal {
+    use core::mem::MaybeUninit;
+
     use bytemuck::Pod;
 
     use super::super::PodMap;
@@ -14,58 +16,82 @@ mod internal {
     impl<K: PartialEq + Pod, V, const N: usize> PodMap<K, V, N> {
         /// Internal function to get access via reference to the element in the internal array.
         #[inline]
-        pub(crate) unsafe fn item_ref(&self, i: usize) -> &(K, V) {
-            self.pairs.get_unchecked(i).assume_init_ref()
+        pub(crate) unsafe fn key_ref(&self, i: usize) -> &K {
+            self.keys.get_unchecked(i)
+        }
+
+        /// Internal function to get access via reference to the element in the internal array.
+        #[inline]
+        pub(crate) unsafe fn key_mut(&mut self, i: usize) -> &mut K {
+            self.keys.get_unchecked_mut(i)
+        }
+
+        /// Internal function to get access via reference to the element in the internal array.
+        #[inline]
+        pub(crate) unsafe fn value_ref(&self, i: usize) -> &V {
+            self.values.get_unchecked(i).assume_init_ref()
+        }
+
+        /// Internal function to get access via reference to the element in the internal array.
+        #[inline]
+        pub(crate) unsafe fn value_mut(&mut self, i: usize) -> &mut V {
+            self.values.get_unchecked_mut(i).assume_init_mut()
+        }
+
+        /// Internal function to get access via reference to the element in the internal array.
+        #[inline]
+        pub(crate) unsafe fn item_ref(&self, i: usize) -> (&K, &V) {
+            let k = self.keys.get_unchecked(i);
+            let v = self.values.get_unchecked(i).assume_init_ref();
+            (k, v)
         }
 
         /// Internal function to get mutable access via reference to the element in the internal array.
         #[inline]
-        pub(crate) unsafe fn item_mut(&mut self, i: usize) -> &mut V {
-            &mut self.pairs.get_unchecked_mut(i).assume_init_mut().1
+        pub(crate) unsafe fn item_mut(&mut self, i: usize) -> (&K, &mut V) {
+            let k = self.keys.get_unchecked(i);
+            let v = self.values.get_unchecked_mut(i).assume_init_mut();
+            (k, v)
         }
 
         /// Internal function to get access to the element in the internal array.
         #[inline]
         pub(crate) unsafe fn item_read(&mut self, i: usize) -> (K, V) {
-            self.pairs.get_unchecked(i).assume_init_read()
+            let k = *self.keys.get_unchecked(i);
+            let v = self.values.get_unchecked(i).assume_init_read();
+            (k, v)
         }
 
         /// Internal function to get access to the element in the internal array.
         #[inline]
         pub(crate) unsafe fn item_drop(&mut self, i: usize) {
-            self.pairs.get_unchecked_mut(i).assume_init_drop();
+            // K has Pod trait, so Copy too, and thus no Drop needed for keys.
+            self.values.get_unchecked_mut(i).assume_init_drop();
         }
 
         /// Internal function to get access to the element in the internal array.
         #[inline]
         pub(crate) unsafe fn item_write(&mut self, i: usize, val: (K, V)) {
-            self.pairs.get_unchecked_mut(i).write(val);
-        }
-
-        /// Remove an index (by swapping the last one here and reducing the length)
-        #[inline]
-        pub(crate) unsafe fn remove_index_drop(&mut self, i: usize) {
-            self.item_drop(i);
-
-            self.len -= 1;
-            if i != self.len {
-                let value = self.item_read(self.len);
-                self.item_write(i, value);
-            }
+            *self.keys.get_unchecked_mut(i) = val.0;
+            self.values.get_unchecked_mut(i).write(val.1);
         }
 
         /// Remove an index (by swapping the last one here and reducing the length)
         #[inline]
         pub(crate) unsafe fn remove_index_read(&mut self, i: usize) -> (K, V) {
-            let result = self.item_read(i);
-
-            self.len -= 1;
-            if i != self.len {
-                let value = self.item_read(self.len);
-                self.item_write(i, value);
+            let last = self.len - 1;
+            if i != last {
+                self.keys.swap(i, last);
+                self.values.swap(i, last);
             }
+            let key = core::mem::replace(self.key_mut(last), K::zeroed());
+            let value = core::mem::replace(
+                self.value_mut(last),
+                MaybeUninit::uninit().assume_init_read(),
+            );
+            self.len -= 1;
 
-            result
+            (key, value)
         }
     }
 
@@ -230,25 +256,28 @@ impl<K: PartialEq + Pod, V, const N: usize> PodMap<K, V, N> {
         self.len
     }
 
-    /// Clears the PodMap, returning all key-value pairs as an iterator. Keeps the allocated memory for reuse.
+    /// Clears the [`PodMap`], returning all key-value pairs as an iterator. Keeps the allocated memory for reuse.
     ///
-    /// If the returned iterator is dropped before being fully consumed, it drops the remaining key-value pairs. The returned iterator keeps a mutable borrow on the PodMap to optimize its implementation.
+    /// If the returned iterator is dropped before being fully consumed, it drops the remaining key-value pairs. The returned iterator keeps a mutable borrow on the [`PodMap`] to optimize its implementation.
     pub fn drain(&mut self) -> Drain<'_, K, V> {
         let drain = Drain {
-            iter: self.pairs[0..self.len].iter_mut(),
+            keys: self.keys[0..self.len].iter(),
+            values: self.values[0..self.len].iter_mut(),
         };
         self.len = 0;
         drain
     }
 
-    /// Does the PodMap contain this key?
+    /// Does the [`PodMap`] contain this key?
     #[inline]
     #[must_use]
     pub fn contains_key<Q: PartialEq + ?Sized>(&self, k: &Q) -> bool
     where
         K: Borrow<Q>,
     {
-        self.iter().any(|(x, _)| x.borrow() == k)
+        self.keys[..self.len]
+            .iter()
+            .any(|k_ref| k_ref.borrow() == k)
     }
 
     /// Remove by key.
@@ -257,20 +286,19 @@ impl<K: PartialEq + Pod, V, const N: usize> PodMap<K, V, N> {
     where
         K: Borrow<Q>,
     {
-        for i in 0..self.len {
-            let p = unsafe { self.item_ref(i) };
-            if p.0.borrow() == k {
-                return Some(unsafe { self.remove_index_read(i).1 });
-            }
-        }
-        None
+        let i = self.keys[..self.len]
+            .iter()
+            .enumerate()
+            .find(|(_, &k_ref)| k_ref.borrow() == k)
+            .map(|(i, _)| i)?;
+        Some(unsafe { self.remove_index_read(i).1 })
     }
 
-    /// Insert a single pair into the PodMap.
+    /// Insert a single pair into the [`PodMap`].
     ///
     /// # Panics
     ///
-    /// It may panic if there are too many pairs in the PodMap already.
+    /// It may panic if there are too many pairs in the [`PodMap`] already.
     /// In order to comply with the memory safety of the Rust language itself, it will
     /// perform bounds checking, whether in `debug` mode or `release` mode.
     ///
@@ -283,11 +311,11 @@ impl<K: PartialEq + Pod, V, const N: usize> PodMap<K, V, N> {
         existing_pair.map(|(_, v)| v)
     }
 
-    /// Insert a single pair into the PodMap without bound check in release mode.
+    /// Insert a single pair into the [`PodMap`] without bound check in release mode.
     ///
     /// # Panics
     ///
-    /// It may panic if there are too many pairs in the PodMap already. Pay attention,
+    /// It may panic if there are too many pairs in the [`PodMap`] already. Pay attention,
     /// it panics only in the `debug` mode. In the `release` mode, you are going to get
     /// **undefined behavior**. This is done for the sake of performance, in order to
     /// avoid a repetitive check for the boundary condition on every `insert()`.
@@ -296,7 +324,7 @@ impl<K: PartialEq + Pod, V, const N: usize> PodMap<K, V, N> {
     ///
     /// Calling this method to add a new key-value pair when the [`PodMap`] is already
     /// full is undefined behavior instead of panic. So you need to make sure that
-    /// the PodMap is not full before calling.
+    /// the [`PodMap`] is not full before calling.
     #[inline]
     pub unsafe fn insert_unchecked(&mut self, k: K, v: V) -> Option<V> {
         let (_, existing_pair) = self.insert_i(k, v);
@@ -314,8 +342,8 @@ impl<K: PartialEq + Pod, V, const N: usize> PodMap<K, V, N> {
                 core::debug_assert!(target < N, "No more key-value slot available in the PodMap");
                 break;
             }
-            let p = unsafe { self.item_ref(i) };
-            if p.0 == k {
+            let k_ref = unsafe { self.key_ref(i) };
+            if k_ref == &k {
                 target = i;
                 existing_pair = Some(unsafe { self.item_read(i) });
                 break;
@@ -334,18 +362,18 @@ impl<K: PartialEq + Pod, V, const N: usize> PodMap<K, V, N> {
     /// that it uses iterators(the second `i`) instead of loops to implement the underlying
     /// insertion logic for `insert_i()`.
     pub(crate) fn insert_ii(&mut self, k: K, v: V) -> (usize, Option<(K, V)>) {
-        if let Some((i, pair)) = self.pairs[..self.len]
+        if let Some((i, key_mut)) = self.keys[..self.len]
             .iter_mut()
-            .map(|p| unsafe { p.assume_init_mut() })
             .enumerate()
-            .find(|(_i, p)| p.0 == k)
+            .find(|(_, k_ref)| *k_ref == &k)
         {
-            (i, Some(replace(pair, (k, v))))
+            let key = core::mem::replace(key_mut, k);
+            let value = core::mem::replace(unsafe { self.value_mut(i) }, v);
+            (i, Some((key, value)))
         } else {
             let i = self.len;
-            // just for panic msg in debug mode, not the main bound check
-            core::debug_assert!(i < N, "No more key-value slot available in the PodMap");
-            self.pairs[i].write((k, v)); // main bound check here but it's ok (not hotspot)
+            core::assert!(i < N, "No more key-value slot available in the PodMap"); // bound check
+            unsafe { self.item_write(i, (k, v)) };
             self.len += 1;
             (i, None)
         }
@@ -358,13 +386,11 @@ impl<K: PartialEq + Pod, V, const N: usize> PodMap<K, V, N> {
     where
         K: Borrow<Q>,
     {
-        for i in 0..self.len {
-            let p = unsafe { self.item_ref(i) };
-            if p.0.borrow() == k {
-                return Some(&p.1);
-            }
-        }
-        None
+        self.keys[..self.len]
+            .iter()
+            .enumerate()
+            .find(|(_, &k_ref)| k_ref.borrow() == k)
+            .map(|(i, _)| unsafe { self.value_ref(i) })
     }
 
     /// Get a mutable reference to a single value.
@@ -378,13 +404,12 @@ impl<K: PartialEq + Pod, V, const N: usize> PodMap<K, V, N> {
     where
         K: Borrow<Q>,
     {
-        for i in 0..self.len {
-            let p = unsafe { self.item_ref(i) };
-            if p.0.borrow() == k {
-                return Some(unsafe { self.item_mut(i) });
-            }
-        }
-        None
+        let i = self.keys[..self.len]
+            .iter()
+            .enumerate()
+            .find(|(_, &k_ref)| k_ref.borrow() == k)
+            .map(|(i, _)| i)?;
+        Some(unsafe { self.value_mut(i) })
     }
 
     /// Remove all pairs from it, but keep the space intact for future use.
@@ -399,17 +424,22 @@ impl<K: PartialEq + Pod, V, const N: usize> PodMap<K, V, N> {
     /// Retains only the elements specified by the predicate.
     #[inline]
     pub fn retain<F: Fn(&K, &V) -> bool>(&mut self, f: F) {
+        let mut len = self.len;
         let mut i = 0;
-        while i < self.len {
-            let p = unsafe { self.item_ref(i) };
-            if f(&p.0, &p.1) {
-                // do not remove -> next index
+        while i < len {
+            let (k, v) = unsafe { (self.key_ref(i), self.value_ref(i)) };
+            if f(k, v) {
                 i += 1;
             } else {
-                unsafe { self.remove_index_drop(i) };
-                // recheck the same index
+                let last = len - 1;
+                unsafe { self.item_drop(i) };
+
+                self.keys.swap(i, last);
+                self.values.swap(i, last);
+                len -= 1;
             }
         }
+        self.len = len;
     }
 
     /// Returns the key-value pair corresponding to the supplied key.
@@ -418,25 +448,22 @@ impl<K: PartialEq + Pod, V, const N: usize> PodMap<K, V, N> {
     where
         K: Borrow<Q>,
     {
-        for i in 0..self.len {
-            let p = unsafe { self.item_ref(i) };
-            if p.0.borrow() == k {
-                return Some((&p.0, &p.1));
-            }
-        }
-        None
+        self.keys[..self.len]
+            .iter()
+            .zip(self.values.iter())
+            .find(|(&k_ref, _)| k_ref.borrow() == k)
+            .map(|(k_ref, v)| unsafe { (k_ref, v.assume_init_ref()) })
     }
 
-    /// Removes a key from the PodMap, returning the stored key and value if the
-    /// key was previously in the PodMap.
+    /// Removes a key from the [`PodMap`], returning the stored key and value if the
+    /// key was previously in the [`PodMap`].
     #[inline]
     pub fn remove_entry<Q: PartialEq + ?Sized>(&mut self, k: &Q) -> Option<(K, V)>
     where
         K: Borrow<Q>,
     {
         for i in 0..self.len {
-            let p = unsafe { self.item_ref(i) };
-            if p.0.borrow() == k {
+            if unsafe { self.key_ref(i) }.borrow() == k {
                 return Some(unsafe { self.remove_index_read(i) });
             }
         }
@@ -445,8 +472,7 @@ impl<K: PartialEq + Pod, V, const N: usize> PodMap<K, V, N> {
 
     pub fn entry(&mut self, k: K) -> Entry<'_, K, V, N> {
         for i in 0..self.len {
-            let p = unsafe { self.item_ref(i) };
-            if p.0 == k {
+            if unsafe { *self.key_ref(i) } == k {
                 return Entry::Occupied(OccupiedEntry {
                     index: i,
                     table: self,
@@ -602,6 +628,7 @@ mod tests {
         let mut m: PodMap<i32, i32, 10> = PodMap::from_iter(vec);
         assert_eq!(m.len(), 8);
         m.retain(|&k, _| k < 6);
+        println!("m: {:?}", m);
         assert_eq!(m.len(), 6);
         m.retain(|_, &v| v > 30);
         assert_eq!(m.len(), 2);

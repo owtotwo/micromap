@@ -8,7 +8,7 @@ use core::iter::FusedIterator;
 
 impl<K, V> Drop for Drain<'_, K, V> {
     fn drop(&mut self) {
-        for pair in &mut self.iter {
+        for pair in &mut self.values {
             unsafe { pair.assume_init_drop() };
         }
     }
@@ -19,19 +19,24 @@ impl<K: PartialEq + Pod, V> Iterator for Drain<'_, K, V> {
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next().map(|p| unsafe { p.assume_init_read() })
+        let k = *self.keys.next()?;
+        let v = self
+            .values
+            .next()
+            .map(|p| unsafe { p.assume_init_read() })?;
+        Some((k, v))
     }
 
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
-        (self.iter.len(), Some(self.iter.len()))
+        (self.keys.len(), Some(self.keys.len()))
     }
 }
 
 impl<K: PartialEq + Pod, V> ExactSizeIterator for Drain<'_, K, V> {
     #[inline]
     fn len(&self) -> usize {
-        self.iter.len()
+        self.keys.len()
     }
 }
 
@@ -43,7 +48,8 @@ mod tests {
 
     #[test]
     fn normal_drain() {
-        let mut pod_map = PodMap::<u8, u8, 10>::from_iter([(b'a', 97), (b'b', 98), (b'c', 99), (b'd', 100)]);
+        let mut pod_map =
+            PodMap::<u8, u8, 10>::from_iter([(b'a', 97), (b'b', 98), (b'c', 99), (b'd', 100)]);
         let mut cloned_map = pod_map.clone();
 
         let mut drain = pod_map.drain();

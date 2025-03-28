@@ -12,7 +12,8 @@ impl<K: PartialEq + Pod, V, const N: usize> PodMap<K, V, N> {
     #[must_use]
     pub fn iter(&self) -> Iter<'_, K, V> {
         Iter {
-            iter: self.pairs[..self.len].as_ref().iter(),
+            keys: self.keys[..self.len].iter(),
+            values: self.values[..self.len].iter(),
         }
     }
 
@@ -20,7 +21,8 @@ impl<K: PartialEq + Pod, V, const N: usize> PodMap<K, V, N> {
     #[inline]
     pub fn iter_mut(&mut self) -> IterMut<'_, K, V> {
         IterMut {
-            iter: self.pairs[..self.len].as_mut().iter_mut(),
+            keys: self.keys[..self.len].iter(),
+            values: self.values[..self.len].iter_mut(),
         }
     }
 }
@@ -29,7 +31,8 @@ impl<K, V> Clone for Iter<'_, K, V> {
     #[inline]
     fn clone(&self) -> Self {
         Self {
-            iter: self.iter.clone(),
+            keys: self.keys.clone(),
+            values: self.values.clone(),
         }
     }
 }
@@ -39,20 +42,20 @@ impl<'a, K, V> Iterator for Iter<'a, K, V> {
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next().map(|p| {
-            let p = unsafe { p.assume_init_ref() };
-            (&p.0, &p.1)
-        })
+        let key = self.keys.next()?;
+        let value = self.values.next()?;
+        let value = unsafe { value.assume_init_ref() };
+        Some((key, value))
     }
 
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
-        self.iter.size_hint()
+        self.keys.size_hint()
     }
 
     #[inline]
     fn count(self) -> usize {
-        self.iter.len()
+        self.keys.len()
     }
 }
 
@@ -61,20 +64,20 @@ impl<'a, K, V> Iterator for IterMut<'a, K, V> {
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next().map(|p| {
-            let p = unsafe { p.assume_init_mut() };
-            (&p.0, &mut p.1)
-        })
+        let key = self.keys.next()?;
+        let value = self.values.next()?;
+        let value = unsafe { value.assume_init_mut() };
+        Some((key, value))
     }
 
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
-        self.iter.size_hint()
+        self.keys.size_hint()
     }
 
     #[inline]
     fn count(self) -> usize {
-        self.iter.len()
+        self.keys.len()
     }
 }
 
@@ -134,13 +137,13 @@ impl<K: PartialEq + Pod, V, const N: usize> IntoIterator for PodMap<K, V, N> {
 
 impl<K, V> ExactSizeIterator for Iter<'_, K, V> {
     fn len(&self) -> usize {
-        self.iter.len()
+        self.keys.len()
     }
 }
 
 impl<K, V> ExactSizeIterator for IterMut<'_, K, V> {
     fn len(&self) -> usize {
-        self.iter.len()
+        self.keys.len()
     }
 }
 
@@ -169,7 +172,7 @@ mod tests {
 
     #[test]
     fn insert_and_jump_over_next() {
-        let mut m: PodMap<[u8;3], i32, 10> = PodMap::new();
+        let mut m: PodMap<[u8; 3], i32, 10> = PodMap::new();
         m.insert(b"foo".to_owned(), 42);
         let mut iter = m.into_iter();
         assert_eq!(42, iter.next().unwrap().1);
@@ -178,7 +181,7 @@ mod tests {
 
     #[test]
     fn insert_and_iterate() {
-        let mut m: PodMap<[u8;3], i32, 10> = PodMap::new();
+        let mut m: PodMap<[u8; 3], i32, 10> = PodMap::new();
         m.insert(b"one".to_owned(), 42);
         m.insert(b"two".to_owned(), 16);
         let mut sum = 0;
@@ -190,7 +193,7 @@ mod tests {
 
     #[test]
     fn insert_and_into_iterate() {
-        let mut m: PodMap<[u8;3], i32, 10> = PodMap::new();
+        let mut m: PodMap<[u8; 3], i32, 10> = PodMap::new();
         m.insert(b"one".to_owned(), 42);
         m.insert(b"two".to_owned(), 16);
         let mut sum = 0;
@@ -202,7 +205,7 @@ mod tests {
 
     #[test]
     fn iterate_with_blanks() {
-        let mut m: PodMap<[u8;3], i32, 10> = PodMap::new();
+        let mut m: PodMap<[u8; 3], i32, 10> = PodMap::new();
         m.insert(b"one".to_owned(), 1);
         m.insert(b"two".to_owned(), 3);
         m.insert(b"thr".to_owned(), 5);
@@ -216,7 +219,7 @@ mod tests {
 
     #[test]
     fn into_iterate_with_blanks() {
-        let mut m: PodMap<[u8;3], i32, 10> = PodMap::new();
+        let mut m: PodMap<[u8; 3], i32, 10> = PodMap::new();
         m.insert(b"one".to_owned(), 1);
         m.insert(b"two".to_owned(), 3);
         m.insert(b"thr".to_owned(), 5);
@@ -230,7 +233,7 @@ mod tests {
 
     #[test]
     fn change_with_iter_mut() {
-        let mut m: PodMap<[u8;3], i32, 10> = PodMap::new();
+        let mut m: PodMap<[u8; 3], i32, 10> = PodMap::new();
         m.insert(b"one".to_owned(), 2);
         m.insert(b"two".to_owned(), 3);
         m.insert(b"thr".to_owned(), 5);
@@ -243,7 +246,7 @@ mod tests {
 
     #[test]
     fn iter_mut_with_blanks() {
-        let mut m: PodMap<[u8;3], i32, 10> = PodMap::new();
+        let mut m: PodMap<[u8; 3], i32, 10> = PodMap::new();
         m.insert(b"one".to_owned(), 1);
         m.insert(b"two".to_owned(), 3);
         m.insert(b"thr".to_owned(), 5);
@@ -255,7 +258,7 @@ mod tests {
 
     #[test]
     fn into_iter_mut() {
-        let mut m: PodMap<[u8;3], i32, 10> = PodMap::new();
+        let mut m: PodMap<[u8; 3], i32, 10> = PodMap::new();
         m.insert(b"one".to_owned(), 2);
         m.insert(b"two".to_owned(), 3);
         m.insert(b"thr".to_owned(), 5);

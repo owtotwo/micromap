@@ -31,7 +31,10 @@ impl<T: PartialEq, const N: usize> Set<T, N> {
     /// assert_eq!(diff, Set::from([4]));
     /// ```
     #[inline]
-    pub fn difference<'a, 'b, const M: usize>(&'a self, other: &'b Set<T, M>) -> Difference<'a, 'b, T, M> {
+    pub fn difference<'a, 'b, const M: usize>(
+        &'a self,
+        other: &'b Set<T, M>,
+    ) -> Difference<'a, 'b, T, M> {
         Difference {
             iter: self.iter(),
             other,
@@ -111,7 +114,9 @@ impl<'a, T: PartialEq, const M: usize> Iterator for Difference<'a, '_, T, M> {
 
 impl<T: PartialEq, const M: usize> core::iter::FusedIterator for Difference<'_, '_, T, M> {}
 
-impl<T: core::fmt::Debug + PartialEq, const M: usize> core::fmt::Debug for Difference<'_, '_, T, M> {
+impl<T: core::fmt::Debug + PartialEq, const M: usize> core::fmt::Debug
+    for Difference<'_, '_, T, M>
+{
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_list().entries(self.clone()).finish()
     }
