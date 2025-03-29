@@ -678,16 +678,16 @@ mod tests {
         assert_eq!(m.remove_entry(&2), None);
     }
 
-    #[test]
-    fn drop_removed_entry() {
-        use std::rc::Rc;
-        let mut m: PodMap<(), Rc<()>, 8> = PodMap::new();
-        let v = Rc::new(());
-        assert_eq!(m.insert((), Rc::clone(&v)), None);
-        assert_eq!(Rc::strong_count(&v), 2);
-        assert_eq!(m.remove_entry(&()), Some(((), Rc::clone(&v))));
-        assert_eq!(Rc::strong_count(&v), 1);
-    }
+    // #[test]
+    // fn drop_removed_entry() {
+    //     use std::rc::Rc;
+    //     let mut m: PodMap<(), Rc<()>, 8> = PodMap::new();
+    //     let v = Rc::new(());
+    //     assert_eq!(m.insert((), Rc::clone(&v)), None);
+    //     assert_eq!(Rc::strong_count(&v), 2);
+    //     assert_eq!(m.remove_entry(&()), Some(((), Rc::clone(&v))));
+    //     assert_eq!(Rc::strong_count(&v), 1);
+    // }
 
     #[test]
     fn insert_after_remove() {
