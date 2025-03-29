@@ -1,0 +1,29 @@
+# SPDX-FileCopyrightText: Copyright (c) 2023-2025 Yegor Bugayenko
+# SPDX-FileCopyrightText: Copyright (c) 2025 owtotwo
+# SPDX-License-Identifier: MIT
+---
+# yamllint disable rule:line-length
+name: examples
+'on':
+  push:
+  pull_request:
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  run-examples:
+    timeout-minutes: 15
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - id: list-examples
+        # For now we only identify single .rs file examples, and will not consider the examples
+        # listed in cargo.toml or complex examples in the form of Cargo workspace folders.
+        run: echo "::set-output name=examples::$(ls examples/*.rs | xargs -n 1 basename | sed 's/\.rs//')"
+      - run: |
+          for example in ${{ steps.list-examples.outputs.examples }}; do
+            cargo --color=never run --example $example
+          done
