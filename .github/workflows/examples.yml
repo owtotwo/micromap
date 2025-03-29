@@ -19,9 +19,12 @@ jobs:
       - id: list-examples
         # For now we only identify single .rs file examples, and will not consider the examples
         # listed in cargo.toml or complex examples in the form of Cargo workspace folders.
-        run: echo "examples<<EOF" >> "$GITHUB_ENV"
-        run: echo "$(find examples -name '*.rs' -print0 | xargs -0 -I {} basename {} .rs)" >> "$GITHUB_ENV"
-        run: echo "EOF" >> "$GITHUB_ENV"
+        run: |
+          {
+            echo "examples<<EOF"
+            find examples -name '*.rs' -print0 | xargs -0 -I {} basename {} .rs
+            echo "EOF"
+          } >> "$GITHUB_ENV"
       - run: |
           for example in ${{ env.examples }}; do
             cargo --color=never run --example $example
