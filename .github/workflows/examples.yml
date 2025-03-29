@@ -26,6 +26,6 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_ENV"
       - run: |
-          for example in ${{ env.examples }}; do
-            cargo --color=never run --example $example
+          echo "${{ env.examples }}" | while IFS= read -r example; do
+            cargo run --example "$example"
           done
