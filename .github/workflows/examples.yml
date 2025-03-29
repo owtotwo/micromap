@@ -22,8 +22,8 @@ jobs:
       - id: list-examples
         # For now we only identify single .rs file examples, and will not consider the examples
         # listed in cargo.toml or complex examples in the form of Cargo workspace folders.
-        run: echo "::set-output name=examples::$(ls examples/*.rs | xargs -n 1 basename | sed 's/\.rs//')"
+        run: echo "examples=$(ls examples/*.rs | xargs -n 1 basename | sed 's/\.rs//')" >> $GITHUB_ENV
       - run: |
-          for example in ${{ steps.list-examples.outputs.examples }}; do
+          for example in ${{ env.examples }}; do
             cargo --color=never run --example $example
           done
