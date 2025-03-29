@@ -39,79 +39,64 @@ use core::mem::MaybeUninit;
 
 use bytemuck::Pod;
 
-
 /// A special version of [`crate::Map`], which Key type has [`Pod`] trait.
 ///
 /// For example, this is how you make a map, which is allocated on stack and is capable of storing
 /// up to eight key-values pairs:
 ///
 /// ```
-/// let mut m : micromap::Map<u64, Vec<char>, 8> = micromap::PodMap::new(); // u64 is Pod type
+/// let mut m : micromap::PodMap<u64, Vec<char>, 8> = micromap::PodMap::new(); // u64 is Pod type
 /// m.insert(1, vec!['H', 'e', 'l', 'l', 'o']);
 /// m.insert(2, vec!['W', 'o', 'r', 'l', 'd', '!']);
 /// assert_eq!(2, m.len());
 /// ```
-pub struct Map<K: PartialEq, V, const N: usize> {
-    /// The next available pair in the array.
-    len: usize,
-    /// The bit mask of the keys.
-    bits: (K, K),
-    /// The fixed-size array of key-value pairs.
-    pairs: [MaybeUninit<(K, V)>; N],
-}
 pub struct PodMap<K: PartialEq + Pod, V, const N: usize> {
     /// The next available pair in the array.
     len: usize,
-    /// The bit mask of the keys.
-    bits: (K, K),
-    /// The fixed-size array of key-value pairs.
-    pairs: [MaybeUninit<(K, V)>; N],
+    /// The fixed-size array of keys.
+    keys: [K; N],
+    /// The fixed-size array of values.
+    values: [MaybeUninit<V>; N],
 }
 
 /// Iterator over the [`PodMap`].
-#[repr(transparent)]
 pub struct Iter<'a, K, V> {
-    iter: core::slice::Iter<'a, MaybeUninit<(K, V)>>,
+    keys: core::slice::Iter<'a, K>,
+    values: core::slice::Iter<'a, MaybeUninit<V>>,
 }
 
 /// Mutable Iterator over the [`PodMap`].
-#[repr(transparent)]
 pub struct IterMut<'a, K, V> {
-    iter: core::slice::IterMut<'a, MaybeUninit<(K, V)>>,
+    keys: core::slice::Iter<'a, K>,
+    values: core::slice::IterMut<'a, MaybeUninit<V>>,
 }
 
 /// Into-iterator over the [`PodMap`].
-#[repr(transparent)]
 pub struct IntoIter<K: PartialEq + Pod, V, const N: usize> {
     map: PodMap<K, V, N>,
 }
 
 /// An iterator over the values of the [`PodMap`].
-#[repr(transparent)]
 pub struct Values<'a, K, V> {
     iter: Iter<'a, K, V>,
 }
 
 /// Mutable iterator over the values of the [`PodMap`].
-#[repr(transparent)]
 pub struct ValuesMut<'a, K, V> {
     iter: IterMut<'a, K, V>,
 }
 
 /// Consuming iterator over the values of the [`PodMap`].
-#[repr(transparent)]
 pub struct IntoValues<K: PartialEq + Pod, V, const N: usize> {
     iter: IntoIter<K, V, N>,
 }
 
 /// A read-only iterator over the keys of the [`PodMap`].
-#[repr(transparent)]
 pub struct Keys<'a, K, V> {
     iter: Iter<'a, K, V>,
 }
 
 /// Consuming iterator over the keys of the [`PodMap`].
-#[repr(transparent)]
 pub struct IntoKeys<K: PartialEq + Pod, V, const N: usize> {
     iter: IntoIter<K, V, N>,
 }
@@ -148,5 +133,6 @@ pub struct VacantEntry<'a, K: PartialEq + Pod, V, const N: usize> {
 /// This struct is created by the drain method on `PodMap`. See its documentation for more.
 #[deny(clippy::needless_lifetimes)]
 pub struct Drain<'a, K, V> {
-    iter: core::slice::IterMut<'a, MaybeUninit<(K, V)>>,
+    keys: core::slice::Iter<'a, K>,
+    values: core::slice::IterMut<'a, MaybeUninit<V>>,
 }

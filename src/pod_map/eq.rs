@@ -42,9 +42,9 @@ mod tests {
 
     #[test]
     fn compares_two_maps() {
-        let mut m1: PodMap<[u8;5], i32, 5> = PodMap::new();
+        let mut m1: PodMap<[u8; 5], i32, 5> = PodMap::new();
         m1.insert(b"first".to_owned(), 42);
-        let mut m2: PodMap<[u8;5], i32, 5> = PodMap::new();
+        let mut m2: PodMap<[u8; 5], i32, 5> = PodMap::new();
         m2.insert(b"first".to_owned(), 42);
         assert!(m1.eq(&m2));
     }
@@ -52,7 +52,8 @@ mod tests {
     #[test]
     fn compares_two_diff_cap_maps() {
         let mut m1: PodMap<u8, i32, 3> = PodMap::from([(b'a', 97), (b'b', 98), (b'c', 99)]);
-        let mut m2: PodMap<u8, i32, 4> = PodMap::from([(b'c', 99), (b'c', 99), (b'c', 99), (b'b', 98)]);
+        let mut m2: PodMap<u8, i32, 4> =
+            PodMap::from([(b'c', 99), (b'c', 99), (b'c', 99), (b'b', 98)]);
         m2.insert(b'a', 97);
         assert!(m1.eq(&m2));
         m1.remove(&b'c');

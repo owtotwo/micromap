@@ -1,26 +1,24 @@
 // SPDX-FileCopyrightText: Copyright (c) 2023-2025 Yegor Bugayenko
 // SPDX-License-Identifier: MIT
 
-use core::mem::MaybeUninit;
-
 use bytemuck::Pod;
 
 use super::PodMap;
 
 impl<K: Clone + PartialEq + Pod, V: Clone, const N: usize> Clone for PodMap<K, V, N> {
     fn clone(&self) -> Self {
-        let mut pm = PodMap {
-            len: self.len,
-            bits: self.bits.clone(),
-            pairs: [const { MaybeUninit::uninit() }; N],
-        };
-        pm.pairs[..self.len]
+        let mut pm = Self::new();
+        pm.len = self.len;
+        pm.keys[..self.len]
             .iter_mut()
-            .zip(self.pairs[..self.len].iter())
-            .for_each(|(p1, p2)| {
-                let (k1, v1) = unsafe { p1.assume_init_mut() };
-                let (k2, v2) = unsafe { p2.assume_init_ref() };
-                *k1 = k2.clone();
+            .zip(self.keys[..self.len].iter())
+            .for_each(|(k1, k2)| *k1 = *k2);
+        pm.values[..self.len]
+            .iter_mut()
+            .zip(self.values[..self.len].iter())
+            .for_each(|(v1, v2)| {
+                let v1 = unsafe { v1.assume_init_mut() };
+                let v2 = unsafe { v2.assume_init_ref() };
                 *v1 = v2.clone();
             });
         pm

@@ -65,7 +65,7 @@ impl<'a, K: PartialEq + Pod, V: Default, const N: usize> Entry<'a, K, V, N> {
 impl<'a, K: PartialEq + Pod, V, const N: usize> OccupiedEntry<'a, K, V, N> {
     #[must_use]
     pub fn key(&self) -> &K {
-        unsafe { &self.table.item_ref(self.index).0 }
+        unsafe { self.table.item_ref(self.index).0 }
     }
 
     #[must_use]
@@ -75,16 +75,16 @@ impl<'a, K: PartialEq + Pod, V, const N: usize> OccupiedEntry<'a, K, V, N> {
 
     #[must_use]
     pub fn get(&self) -> &V {
-        unsafe { &self.table.item_ref(self.index).1 }
+        unsafe { self.table.item_ref(self.index).1 }
     }
 
     pub fn get_mut(&mut self) -> &mut V {
-        unsafe { self.table.item_mut(self.index) }
+        unsafe { self.table.item_mut(self.index).1 }
     }
 
     #[must_use]
     pub fn into_mut(self) -> &'a mut V {
-        unsafe { self.table.item_mut(self.index) }
+        unsafe { self.table.item_mut(self.index).1 }
     }
 
     pub fn insert(&mut self, value: V) -> V {
@@ -102,13 +102,13 @@ impl<'a, K: PartialEq + Pod, V, const N: usize> VacantEntry<'a, K, V, N> {
         &self.key
     }
 
-    pub fn into_key(self) -> K {
+    pub const fn into_key(self) -> K {
         self.key
     }
 
     pub fn insert(self, value: V) -> &'a mut V {
         let (index, _) = self.table.insert_i(self.key, value);
-        unsafe { self.table.item_mut(index) }
+        unsafe { self.table.item_mut(index).1 }
     }
 }
 
@@ -126,13 +126,20 @@ mod tests {
 
     #[test]
     fn various() {
-        let mut m: PodMap<PodChar, u8, 10> =
-            PodMap::from_iter([(PodChar(b'a'), 97), (PodChar(b'd'), 100), (PodChar(b'c'), 99), (PodChar(b'b'), 98)]);
+        let mut m: PodMap<PodChar, u8, 10> = PodMap::from_iter([
+            (PodChar(b'a'), 97),
+            (PodChar(b'd'), 100),
+            (PodChar(b'c'), 99),
+            (PodChar(b'b'), 98),
+        ]);
         let e: Entry<'_, PodChar, u8, 10> = m.entry(PodChar(b'c'));
         assert_eq!(e.key(), &PodChar(b'c'));
         m.entry(PodChar(b'e')).or_insert(b'e');
         m.entry(PodChar(b'e')).or_insert(b'e');
-        assert_eq!(*m.entry(PodChar(b'e')).and_modify(|v| *v = 42).or_default(), 42);
+        assert_eq!(
+            *m.entry(PodChar(b'e')).and_modify(|v| *v = 42).or_default(),
+            42
+        );
         assert_eq!(m.entry(PodChar(b'g')).key(), &PodChar(b'g'));
         assert_eq!(
             *m.entry(PodChar(b'g')).and_modify(|v| *v = 42).or_default(),
@@ -154,8 +161,7 @@ mod tests {
         assert_eq!(*m.entry(PodChar(b'f')).or_insert_with(|| value + 2), 43); // no change
         assert_eq!(m.remove_entry(&PodChar(b'f')), Some((PodChar(b'f'), 43))); // 43 -> _
         assert_eq!(
-            *m.entry(PodChar(b'f'))
-                .or_insert_with_key(|&key| key.0),
+            *m.entry(PodChar(b'f')).or_insert_with_key(|&key| key.0),
             102
         ); // _ -> 102
         assert_eq!(*m.entry(PodChar(b'f')).or_insert_with_key(|&_| 255), 102); // no change
