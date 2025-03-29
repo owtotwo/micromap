@@ -14,11 +14,11 @@ impl<K: PartialEq + Pod + Serialize, V: Serialize, const N: usize> Serialize for
     where
         S: Serializer,
     {
-        let mut PodMap = serializer.serialize_map(Some(self.len()))?;
+        let mut map = serializer.serialize_map(Some(self.len()))?;
         for (a, v) in self {
-            PodMap.serialize_entry(a, v)?;
+            map.serialize_entry(a, v)?;
         }
-        PodMap.end()
+        map.end()
     }
 }
 
