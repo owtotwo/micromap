@@ -70,23 +70,23 @@ while the numbers below 1.0 demonstrate performance loss.
 <!-- benchmark -->
 | | 2 | 4 | 8 | 16 | 32 | 64 | 128 |
 | --- | --: | --: | --: | --: | --: | --: | --: |
-| `flurry::HashMap` | 265.09 | 87.20 | 42.94 | 21.88 | 11.91 | 5.37 | 2.43 |
-| `hashbrown::HashMap` | 20.67 | 10.76 | 6.80 | 3.33 | 1.54 | 0.63 | 0.26 |
-| `heapless::LinearMap` | 1.09 | 1.41 | 1.20 | 1.21 | 1.04 | 1.12 | 0.85 |
-| `indexmap::IndexMap` | 13.34 | 11.88 | 7.63 | 5.80 | 2.14 | 1.01 | 0.43 |
-| `linear_map::LinearMap` | 1.65 | 1.48 | 1.07 | 1.13 | 1.02 | 1.24 | 1.03 |
-| `linked_hash_map::LinkedHashMap` | 26.22 | 19.95 | 12.33 | 6.91 | 3.39 | 1.58 | 0.72 |
-| `litemap::LiteMap` | 1.64 | 2.20 | 4.62 | 3.32 | 2.23 | 1.02 | 0.52 |
+| `flurry::HashMap` | 276.87 | 86.03 | 42.40 | 21.79 | 11.79 | 5.00 | 2.51 |
+| `hashbrown::HashMap` | 20.76 | 10.72 | 6.78 | 3.33 | 1.66 | 0.70 | 0.27 |
+| `heapless::LinearMap` | 1.10 | 1.41 | 1.21 | 1.20 | 1.04 | 1.04 | 0.86 |
+| `indexmap::IndexMap` | 13.29 | 11.36 | 7.58 | 5.83 | 2.18 | 0.96 | 0.44 |
+| `linear_map::LinearMap` | 1.65 | 1.49 | 1.12 | 1.12 | 1.01 | 1.17 | 1.04 |
+| `linked_hash_map::LinkedHashMap` | 26.56 | 20.54 | 12.25 | 6.93 | 3.66 | 1.46 | 0.71 |
+| `litemap::LiteMap` | 1.65 | 2.22 | 4.73 | 3.22 | 2.25 | 0.94 | 0.53 |
 | `micromap::Map` 👍 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 |
-| `nohash_hasher::BuildNoHashHasher` | 20.54 | 11.10 | 7.41 | 3.03 | 1.53 | 0.68 | 0.32 |
-| `rustc_hash::FxHashMap` | 20.38 | 10.84 | 6.89 | 3.07 | 1.28 | 0.64 | 0.28 |
-| `std::collections::BTreeMap` | 25.05 | 10.34 | 5.44 | 4.31 | 2.47 | 1.18 | 0.62 |
-| `std::collections::HashMap` | 20.70 | 14.14 | 8.63 | 4.89 | 2.60 | 1.23 | 0.51 |
-| `tinymap::array_map::ArrayMap` | 1.63 | 4.38 | 4.57 | 4.93 | 4.32 | 4.58 | 3.88 |
+| `nohash_hasher::BuildNoHashHasher` | 20.55 | 11.16 | 7.43 | 3.04 | 1.50 | 0.63 | 0.32 |
+| `rustc_hash::FxHashMap` | 20.32 | 10.82 | 6.90 | 2.99 | 1.28 | 0.59 | 0.28 |
+| `std::collections::BTreeMap` | 25.06 | 10.44 | 5.45 | 4.34 | 2.44 | 1.09 | 0.62 |
+| `std::collections::HashMap` | 21.33 | 14.12 | 8.71 | 4.83 | 2.60 | 1.05 | 0.50 |
+| `tinymap::array_map::ArrayMap` | 1.63 | 4.40 | 4.57 | 4.90 | 4.35 | 4.25 | 3.92 |
 
-The experiment [was performed][action] on 31-03-2025.
+The experiment [was performed][action] on 05-04-2025.
 There were 1000000 repetition cycles.
-The entire benchmark took 242s.
+The entire benchmark took 243s.
 Uname: 'Linux'.
 
 <!-- benchmark -->
