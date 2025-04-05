@@ -1,14 +1,10 @@
 use micromap::Map;
 
-
-
 #[test]
 fn cover_code() {
     let map: Map<i32, i32, 0> = Map::new();
     assert_eq!(map.capacity(), 0);
-    
 }
-
 
 #[test]
 fn test_insert_and_get() {
