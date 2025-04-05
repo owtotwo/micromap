@@ -50,3 +50,6 @@ harness = true
 [[bench]]
 name = "len"
 harness = true
+
+[[test]]
+name = "basic"
