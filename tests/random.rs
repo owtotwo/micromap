@@ -369,9 +369,9 @@ fn for_n<const N: usize>(mut map: impl IsMap<Uuid, [u8; 16], N>) -> Vec<OpResult
     return results;
 }
 
-// TODO: Use a Deterministic Hash Function to ensure that the hash result
-//       does not depend on the specific implementation of hash function
-//       and Rust compiler's optimization level.
+// Better: Use a Deterministic Hash Function to ensure that the hash result
+//     does not depend on the specific implementation of hash function and
+//     Rust compiler's optimization level.
 fn make_hash<K: core::hash::Hash>(k: &K, seed: u64) -> u64 {
     use core::hash::BuildHasher;
     let state = foldhash::fast::FixedState::with_seed(seed);
