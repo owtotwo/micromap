@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: Copyright (c) 2023-2025 Yegor Bugayenko
-// SPDX-FileCopyrightText: Copyright (c) 2025 owtotwo
+// SPDX-FileCopyrightText: Copyright (c) 2025-2026 owtotwo
 // SPDX-License-Identifier: MIT
 
 #![cfg(debug_assertions)]
@@ -30,8 +30,26 @@ const XOR_EXPECT: u64 = 0x150D46E005A17B7C; // for a specific ROUNDS=12345
 /// calculated at compile time when optimization is enabled and it will stuck.
 #[test]
 fn each_capacity() {
+    // A larger stack is needed to accommodate a large-capacity(N) Map<_,_,N>
+    // entirely in a single load.
+    //
+    // ∵ The size_of::<Map<Uuid, [u8; 16], N>>()
+    //     => size_of::<usize> + N * (size_of::<Uuid>() + 16)
+    //     => 8 + N * (16 + 16) # for 64 bit platform
+    // ∴ Assuming N=1024, the safe stack size is conservatively estimated to be
+    //   between 48 MB and 64 MB.
+    std::thread::Builder::new()
+        .name("test-random-each_capacity".to_string())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(each_capacity_impl)
+        .expect("failed to spawn thread for random test")
+        .join()
+        .expect("spawned thread panicked");
+}
+
+fn each_capacity_impl() {
     let mut xor_hash = 0u64;
-    seq!(N in 0..257 {
+    seq!(N in 0..=256 {
         let micro_map: Map<Uuid, [u8; 16], N> = Map::new();
         let micromap_results = for_n::<N>(micro_map);
         let hash_map: HashMap<Uuid, [u8; 16]> = HashMap::new();
@@ -351,6 +369,9 @@ fn for_n<const N: usize>(mut map: impl IsMap<Uuid, [u8; 16], N>) -> Vec<OpResult
     return results;
 }
 
+// TODO: Use a Deterministic Hash Function to ensure that the hash result
+//       does not depend on the specific implementation of hash function
+//       and Rust compiler's optimization level.
 fn make_hash<K: core::hash::Hash>(k: &K, seed: u64) -> u64 {
     use core::hash::BuildHasher;
     let state = foldhash::fast::FixedState::with_seed(seed);
