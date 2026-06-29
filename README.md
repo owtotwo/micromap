@@ -1,12 +1,12 @@
 # The Fastest Linear Map in Rust
 
-[![cargo](https://github.com/yegor256/micromap/actions/workflows/cargo.yml/badge.svg)](https://github.com/yegor256/micromap/actions/workflows/cargo.yml)
-[![crates.io](https://img.shields.io/crates/v/micromap.svg)](https://crates.io/crates/micromap)
+[![cargo](https://github.com/owtotwo/micromap/actions/workflows/cargo.yml/badge.svg)](https://github.com/owtotwo/micromap/actions/workflows/cargo.yml)
+[![crates.io](https://img.shields.io/badge/crates.io-v0.1.0-orange.svg)](https://crates.io/crates/micromap)
 [![docs.rs](https://img.shields.io/docsrs/micromap)](https://docs.rs/micromap/latest/micromap/)
 [![MSRV](https://img.shields.io/badge/MSRV-1.79-ffc832)](https://blog.rust-lang.org/2024/06/13/Rust-1.79.0.html)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/yegor256/micromap/blob/master/LICENSE.txt)
-[![codecov](https://codecov.io/gh/yegor256/micromap/branch/master/graph/badge.svg)](https://codecov.io/gh/yegor256/micromap)
-[![Hits-of-Code](https://hitsofcode.com/github/yegor256/micromap)](https://hitsofcode.com/view/github/yegor256/micromap)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/owtotwo/micromap/blob/master/LICENSE.txt)
+[![codecov](https://codecov.io/gh/owtotwo/micromap/branch/master/graph/badge.svg)](https://codecov.io/gh/owtotwo/micromap)
+[![Hits-of-Code](https://hitsofcode.com/github/owtotwo/micromap)](https://hitsofcode.com/view/github/owtotwo/micromap)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fyegor256%2Fmicromap.svg?type=shield&issueType=license)](https://app.fossa.com/projects/git%2Bgithub.com%2Fyegor256%2Fmicromap?ref=badge_shield&issueType=license)
 
 A much faster alternative of
@@ -162,5 +162,5 @@ If no version change is required, do not add any comments after the version
 number `0.0.0`.
 
 [std]: https://doc.rust-lang.org/std/collections/struct.HashMap.html
-[rs]: https://github.com/yegor256/micromap/blob/master/tests/benchmark.rs
-[action]: https://github.com/yegor256/micromap/actions/workflows/benchmark.yml
+[rs]: ./blob/master/tests/benchmark.rs
+[action]: ./actions/workflows/benchmark.yml
